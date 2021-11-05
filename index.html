@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script type="text/javascript" src="http://static.robotwebtools.org/EaselJS/current/easeljs.min.js"></script>
+<script type="text/javascript" src="http://static.robotwebtools.org/threejs/current/three.min.js"></script>
+<script type="text/javascript" src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script type="text/javascript" src="http://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+<script type="text/javascript" src="http://static.robotwebtools.org/ros2djs/current/ros2d.min.js"></script>
+<script type="text/javascript" src="http://static.robotwebtools.org/ros3djs/current/ros3d.min.js"></script>
+<script src="ros2d.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+
+<body style="margin-left: 50px;background-color: rgb(228, 225, 225);">
+  <div class="container">
+    <div class="row"><span><img src="rosLarge.png" alt="" style="width: 20%; margin-left: 10px; margin-top: 20px;"></span></div>
+    <div class="jumbotron text-center"  style="margin-left: 50px;background-color: rgb(228, 225, 225);;">
+      <h1>ROS and Rosbridge Test: Turtlesim</h1>
+      <p>Visualize and control the turtle1 from the Browser</p> 
+      <p id="connect"></p>
+    </div>
+    <div class="row">
+      <div class="col-sm-4" id="subscribeInfo">
+        <h4>Turtle1 Pose</h4>
+        <br>
+        <p id="poseX"></p>
+        <p id="poseY"></p>
+        <p id="poseTheta"></p>
+      </div>
+      <div class="col-sm-4" id="subscribeInfo">
+        <h4>Turtle1 Velocity</h4>
+        <br>
+        <div class="col-lg-6">
+          <h5>Linear</h5>
+          <span id="velX"></span>
+          <span id="velY"></span>
+          <span id="velZ"></span>
+        </div>
+        <div class="col-lg-6">
+          <br>
+          <h5>Angular</h5>
+          <span id="angX"></span>
+          <span id="angY"></span>
+          <span id="angZ"></span>
+        </div>
+
+      </div>
+      <div class="col-sm-4" id="publishInfo">
+        <h4>Control Turtle1</h4>
+        <br>
+        <div class="row">
+          <button id="forward"  style="width: 120px; height: 50px; margin: 10px; margin-left: 80px; background-color: rgb(172, 172, 212);font-size: 22px;">Forward</button>
+        </div>
+        <div class="row">
+          <button id="left"  style="width: 120px; height: 50px; margin: 10px;background-color: rgb(172, 172, 212); font-size: 22px;">Left</button>
+          <button id="right"  style="width: 120px; height: 50px; margin: 10px;background-color: rgb(172, 172, 212);font-size: 22px;">Right</button>
+        </div>
+        <div class="row">
+          <button id="backward"  style="width: 120px; height: 50px; margin: 10px; margin-left: 80px; background-color: rgb(172, 172, 212);font-size: 22px;">Backward</button>
+        </div>
+
+
+      </div>
+    </div>
+    <div class="row" style="margin-top: 100px;">
+      <div id="map"></div>
+    </div>
+  </div>
+  <script type="text/javascript" type="text/javascript">
+
+    // Connecting to ROS
+    let connect = document.getElementById('connect');
+  
+    var ros = new ROSLIB.Ros({
+      // url : 'ws://192.168.100.105:9090'
+      url : 'ws://localhost:9090'
+    });
+  
+    ros.on('connection', function() {
+      console.log('Connected to websocket server.');
+      connect.textContent = 'Connected to websocket server.'
+      connect.style.color = 'green';
+    });
+  
+    ros.on('error', function(error) {
+      console.log('Error connecting to websocket server: ', error);
+      connect.textContent = 'Error connecting to websocket server.'
+      connect.style.color = 'red';
+    });
+  
+    ros.on('close', function() {
+      console.log('Connection to websocket server closed.');
+      connect.textContent = 'Connection to websocket server closed.'
+      connect.style.color = 'red';
+    });
+  
+    // Publishing a Topic
+
+    let forward = document.getElementById('forward');
+
+    forward.addEventListener('click', () => {
+      var cmdVel = new ROSLIB.Topic({
+        ros : ros,
+        name : '/turtle1/cmd_vel',
+        messageType : 'geometry_msgs/Twist'
+      })
+
+       var twist = new ROSLIB.Message({
+        linear : {
+            x : 1,
+            y : 0.0,
+            z : 0.0
+        },
+        angular : {
+            x : 0.0,
+            y : 0.0,
+            z : 0.0
+        }
+        })
+    cmdVel.publish(twist)
+  })
+
+let left = document.getElementById('left');
+
+left.addEventListener('click', () => {
+  var cmdVel = new ROSLIB.Topic({
+    ros : ros,
+    name : '/turtle1/cmd_vel',
+    messageType : 'geometry_msgs/Twist'
+  })
+
+   var twist = new ROSLIB.Message({
+    linear : {
+        x : 0.0,
+        y : 0.0,
+        z : 0.0
+    },
+    angular : {
+        x : 0.0,
+        y : 0.0,
+        z : 1
+    }
+    })
+cmdVel.publish(twist)
+})
+
+let right = document.getElementById('right');
+
+right.addEventListener('click', () => {
+  var cmdVel = new ROSLIB.Topic({
+    ros : ros,
+    name : '/turtle1/cmd_vel',
+    messageType : 'geometry_msgs/Twist'
+  })
+
+   var twist = new ROSLIB.Message({
+    linear : {
+        x : 0.0,
+        y : 0.0,
+        z : 0.0
+    },
+    angular : {
+        x : 0.0,
+        y : 0.0,
+        z : -1
+    }
+    })
+cmdVel.publish(twist)
+})
+
+let backward = document.getElementById('backward');
+
+backward.addEventListener('click', () => {
+  var cmdVel = new ROSLIB.Topic({
+    ros : ros,
+    name : '/turtle1/cmd_vel',
+    messageType : 'geometry_msgs/Twist'
+  })
+
+   var twist = new ROSLIB.Message({
+    linear : {
+        x : -1,
+        y : 0.0,
+        z : 0.0
+    },
+    angular : {
+        x : 0.0,
+        y : 0.0,
+        z : 0.0
+    }
+    })
+cmdVel.publish(twist)
+})
+  
+    // Subscribing to a Topic
+  
+    var listener = new ROSLIB.Topic({
+      ros : ros,
+      name : '/hello',
+      messageType : 'std_msgs/String'
+    });
+  
+    listener.subscribe(function(message) {
+      console.log('Received message on ' + listener.name + ': ' + message.data);
+      listener.unsubscribe();
+    });
+  
+    // Subscribing to a Topic
+
+      let listener2 = new ROSLIB.Topic({
+      ros : ros,
+      name : '/turtle1/pose',
+      messageType : 'turtlesim/Pose'
+    });
+  
+    let poseX = document.getElementById('poseX');
+    let poseY = document.getElementById('poseY');
+    let poseTheta = document.getElementById('poseTheta');
+
+    listener2.subscribe(function(message) {
+      console.log(message)
+      poseX.textContent = 'X: ' + message.x;
+      poseY.textContent = 'Y: ' + message.y;
+      poseTheta.textContent = 'Theta: ' + message.theta;
+      console.log('Received message on ' + listener2.name + ': ' + message.x + ', ' + message.y + ', ' + message.theta);
+      // listener2.unsubscribe();
+    });
+
+
+
+    var listener3 = new ROSLIB.Topic({
+      ros : ros,
+      name : '/turtle1/cmd_vel',
+      messageType : 'geometry_msgs/Twist'
+    });
+  
+    let velX = document.getElementById('velX');
+    let velY = document.getElementById('velY');
+    let velZ = document.getElementById('velZ');
+    let angX = document.getElementById('angX');
+    let angY = document.getElementById('angY');
+    let angZ = document.getElementById('angZ');
+
+    listener3.subscribe(function(message) {
+      velX.textContent = 'X: ' + message.linear.x + '  ';
+      velY.textContent = 'Y: ' + message.linear.y + '  ';
+      velZ.textContent = 'Z: ' + message.linear.z + '  ';
+      angX.textContent = 'X: ' + message.angular.x + '  ';
+      angY.textContent = 'Y: ' + message.angular.y + '  ';
+      angZ.textContent = 'Z: ' + message.angular.z + '  ';
+      console.log('Received message on ' + listener3.name + ': ' + message.linear.x);
+      // listener2.unsubscribe();
+    });
+
+    var viewer = new ROS3D.Viewer({
+      divID : 'map',
+      width : 1000,
+      height : 600,
+      antialias : true
+    });
+
+    // var viewer = new ROS2D.Viewer({
+    //   divID : 'map',
+    //   width : 600,
+    //   height : 500
+    // });
+
+    // Setup the map client.
+
+    var gridClient = new ROS3D.OccupancyGridClient({
+      ros : ros,
+      rootObject : viewer.scene
+    });
+    
+
+    // var gridClient = new ROS2D.OccupancyGridClient({
+    //   ros : ros,
+    //   rootObject : viewer.scene
+    // });
+
+    // Scale the canvas to fit to the map
+
+    gridClient.on('change', function(){
+      viewer.scaleToDimensions(gridClient.currentGrid.width, gridClient.currentGrid.height);
+    });
+
+    // Calling a service
+    // -----------------
+  
+    var addTwoIntsClient = new ROSLIB.Service({
+      ros : ros,
+      name : '/add_two_ints',
+      serviceType : 'rospy_tutorials/AddTwoInts'
+    });
+  
+    var request = new ROSLIB.ServiceRequest({
+      a : 1,
+      b : 2
+    });
+  
+    addTwoIntsClient.callService(request, function(result) {
+      console.log('Result for service call on '
+        + addTwoIntsClient.name
+        + ': '
+        + result.sum);
+    });
+  
+    // Getting and setting a param value
+    // ---------------------------------
+  
+    ros.getParams(function(params) {
+      console.log(params);
+    });
+  
+    var maxVelX = new ROSLIB.Param({
+      ros : ros,
+      name : 'max_vel_y'
+    });
+  
+    maxVelX.set(0.8);
+    maxVelX.get(function(value) {
+      console.log('MAX VAL: ' + value);
+    });
+  </script>
+</body>
+</html>
